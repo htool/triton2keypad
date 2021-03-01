@@ -1,0 +1,30 @@
+{
+  "name": "triton2keypad",
+  "version": "1.0.0",
+  "description": "B&G Triton2 Auto Pilot Keypad",
+  "main": "emulate.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/htool/triton2keypad.git"
+  },
+  "keywords": [
+    "triton2",
+    "B&G",
+    "keypad",
+    "signalk"
+  ],
+  "author": "Hans Tool <hans@defect.org>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/htool/triton2keypad/issues"
+  },
+  "homepage": "https://github.com/htool/triton2keypad#readme",
+  "dependencies": {
+    "@canboat/canboatjs": "file:canboatjs",
+    "debug": "^4.3.1",
+    "lodash": "^4.17.21"
+  }
+}

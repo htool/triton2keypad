@@ -17,7 +17,16 @@ const util = require('util')
 
 debug('Using device id: %i', canbus.candevice.address)
 
-// Generic functions
+const keys_code = {
+  '-1'        : '%s,3,130850,%s,255,0c,41,9f,00,ff,ff,%s,1a,00,02,ae,00',
+  '+1'        : '%s,3,130850,%s,255,0c,41,9f,00,ff,ff,%s,1a,00,03,ae,00',
+  '-10'       : '%s,3,130850,%s,255,0c,41,9f,00,ff,ff,%s,1a,00,02,d1,06',
+  '+10'       : '%s,3,130850,%s,255,0c,41,9f,00,ff,ff,%s,1a,00,03,d1,06',
+  'standby'   : '%s,3,130850,%s,255,0c,41,9f,00,ff,ff,%s,06,00,ff,ff,ff',
+  'wind'      : '%s,3,130850,%s,255,0c,41,9f,00,ff,ff,%s,0e,00,ff,ff,ff',
+  'navigation': '%s,3,130850,%s,255,0c,41,9f,00,ff,ff,%s,0a,00,ff,ff,ff',
+  'auto'      : '%s,3,130850,%s,255,0c,41,9f,00,ff,ff,%s,09,00,ff,ff,ff'
+}
 
 // Sleep
 const sleep = (milliseconds) => {
@@ -56,68 +65,29 @@ async function PGN130822 () {
   }
 }
 
-function AC12_PGN130860 () {
-  const message = "%s,7,130860,%s,255,21,13,99,ff,ff,ff,ff,7f,ff,ff,ff,7f,ff,ff,ff,ff,ff,ff,ff,7f,ff,ff,ff,7f"
-  msg = util.format(message, (new Date()).toISOString(), canbus.candevice.address)
+function keypress (address, key) {
+  debug('Creating packet button %s', key);
+  msg  = util.format(keys_code[key], (new Date()).toISOString(), address, address.toString(16));
+  debug('Packet: ', msg);
   canbus.sendPGN(msg)
 }
 
-async function AP44_PGN65305 () {
-  const messages = [
-    "%s,7,65305,%s,255,8,41,9f,01,03,00,00,00,00",
-    "%s,7,65305,%s,255,8,41,9f,01,0b,00,00,00,00" ]
+debug('Emulate: B&G Triton2 Keypad')
+setTimeout(PGN130822, 5000) // Once at startup
+setInterval(PGN130822, 300000) // Every 5 minutes
+setInterval(heartbeat, 60000) // Heart beat PGN
 
-  for (var nr in messages) {
-    msg = util.format(messages[nr], (new Date()).toISOString(), canbus.candevice.address)
-    canbus.sendPGN(msg)
-    await sleep(500)
-  }
+async function test () {
+  keypress(canbus.candevice.address, 'auto');
+  await sleep(5000);
+  keypress(canbus.candevice.address, '+1');
+  await sleep(5000);
+  keypress(canbus.candevice.address, '-1');
+  await sleep(5000);
+  keypress(canbus.candevice.address, 'standby');
 }
 
-async function AC12_pilotmode () {
-  const messages = [
-    "%s,7,65305,%s,255,8,41,9f,00,02,10,00,00,00",
-    "%s,7,65305,%s,255,8,41,9f,00,0a,14,00,80,00",
-    "%s,3,65340,%s,255,8,41,9f,10,01,fe,fa,00,80",
-    "%s,7,65302,%s,255,8,41,9f,0a,69,00,00,28,ff",
-    "%s,3,65340,%s,255,8,41,9f,10,01,fe,fa,00,80",
-    "%s,6,65341,%s,255,8,41,9f,ff,ff,0d,ff,ff,7f",
-    "%s,6,65341,%s,255,8,41,9f,ff,ff,0b,ff,00,00",
-    "%s,6,65341,%s,255,8,41,9f,ff,ff,0c,ff,ff,ff",
-    "%s,6,65341,%s,255,8,41,9f,ff,ff,03,ff,ff,ff",
-    "%s,6,65341,%s,255,8,41,9f,ff,ff,02,ff,ff,ff" ]
-
-  for (var nr in messages) {
-    msg = util.format(messages[nr], (new Date()).toISOString(), canbus.candevice.address)
-    canbus.sendPGN(msg)
-    await sleep(25)
-  }
-}
-
-switch (emulate) {
-  case 'keypad':
-      debug('Emulate: B&G Triton2 Keypad')
-      setTimeout(PGN130822, 5000) // Once at startup
-      setInterval(PGN130822, 300000) // Every 5 minutes
-      setInterval(heartbeat, 60000) // Heart beat PGN
-      break;
-	case 'AP44':
-	    debug('Emulate: Simrad AP44 Autopilot controller')
-      setTimeout(PGN130822, 5000) // Once at startup
-      setInterval(PGN130822, 300000) // Every 5 minutes
-      setInterval(AP44_PGN65305, 1000) // Every 1 minute
-      setInterval(heartbeat, 60000) // Heart beat PGN
-	    break;
-	case 'AC12':
-	    debug('Emulate: Simrad AC12-1 Autopilot')
-      setTimeout(PGN130822, 5000) // Once at startup
-      setInterval(PGN130822, 300000) // Every 5 minutes
-      setInterval(AC12_pilotmode, 1000) // Every second
-      setInterval(AC12_PGN130860, 1000) // Every second
-      setInterval(heartbeat, 60000) // Heart beat PGN
-	    break;
-}
-
+setTimeout(test, 5000)
 
 function mainLoop () {
 	if (canbus.candevice.cansend) {
@@ -157,4 +127,3 @@ function mainLoop () {
 
 // Check every 5 millisecnds
 setInterval(mainLoop, 5);
-
