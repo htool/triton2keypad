@@ -87,7 +87,7 @@ async function test () {
   keypress(canbus.candevice.address, 'standby');
 }
 
-setTimeout(test, 5000)
+setInterval(test, 30000)
 
 function mainLoop () {
 	if (canbus.candevice.cansend) {
